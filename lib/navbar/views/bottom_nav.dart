@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../screens/views/add_transaction.dart';
 import '../../screens/views/goal_overview_screen.dart';
-import '../../screens/views/home_screen.dart';
+import '../../screens/views/home/home_screen.dart';
 import '../../screens/views/insights_screen.dart';
 import '../views_model/nav_controller.dart';
 

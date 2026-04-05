@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:money_mate/screens/views/home/recent_transaction.dart';
 import 'package:money_mate/screens/views/home/weakly_cart.dart';
+import '../../../profile/view/profile_screen.dart';
+import '../../../profile/view_model/profile_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,6 +15,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  File? imageFile;
   @override
   Widget build(BuildContext context) {
     // media query used for screen height and width to make responsive screens
@@ -19,21 +24,44 @@ class _HomeScreenState extends State<HomeScreen> {
     final screenWidth = size.width;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
+    final ProfileController profileController =  Get.find<ProfileController>();
+
+
 
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
-            const CircleAvatar(child: Icon(Icons.person)),
-            const SizedBox(width: 12),
-            const Column(
+            GestureDetector(
+              onTap: () => Get.to(() => ProfileScreen()),
+              child:
+              Obx(
+                () => CircleAvatar(
+                  radius: 22,
+                  backgroundImage: profileController.imageFile.value == null
+                      ? const AssetImage(
+                          "assets/assets/avatar/profile_avtar.png",
+                        )
+                      : FileImage(profileController.imageFile.value!),
+                ),
+              ),
+            ),
+
+            SizedBox(width: 12),
+             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text("Hello,", style: TextStyle(fontSize: 14)),
-                Text(
-                  "Ram Vaishnav",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                /// Name
+                Obx(
+                      () => Text(
+                    profileController.name.value,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -182,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: 15),
             Container(
-              height: isLandscape ? screenHeight * 0.30 : screenHeight * 0.13,
+              height: isLandscape ? screenHeight * 0.30 : screenHeight * 0.16,
               width: screenWidth * 0.95,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15),
@@ -204,13 +232,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 15),
+                        padding: EdgeInsets.only(left: screenWidth * 0.04),
                         child: Text(
                           "New MacBook Air",
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
-                      SizedBox(width: 130),
+                      SizedBox(width: screenWidth * 0.20),
                       Row(
                         children: [
                           Text(
@@ -266,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           "KEEP IT UP!",
                           style: TextStyle(
                             color: Colors.green,
-                            fontSize: 15,
+                            fontSize: 11,
                             letterSpacing: 1,
                             fontWeight: FontWeight.bold,
                           ),
@@ -590,7 +618,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [WeaklyCart()],
+                  children: [
+                    ///Section - Recent Transaction
+                    WeaklyCart(),
+                  ],
                 ),
               ],
             ),

@@ -1,39 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:get/get.dart';
-import 'package:money_mate/profile/view_model/ImagePickerController.dart';
-import 'package:money_mate/profile/view_model/profile_controller.dart';
-import 'navbar/views/bottom_nav.dart';
-import 'navbar/views_model/nav_controller.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'models/transaction.dart';
+import 'models/goal.dart';
+import 'controllers/transaction_controller.dart';
+import 'controllers/goal_controller.dart';
+import 'controllers/profile_controller.dart';
+import 'views/main_navigation.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inject controllers
-  Get.put(ImagePickerController());
+  await Hive.initFlutter();
+  
+  Hive.registerAdapter(TransactionAdapter());
+  Hive.registerAdapter(GoalAdapter());
+  
+  await Hive.openBox<Transaction>('transactions');
+  await Hive.openBox<Goal>('goals');
+  
+  Get.put(TransactionController());
+  Get.put(GoalController());
   Get.put(ProfileController());
-  Get.put(NavController());
-
-  runApp(const MyApp());
+  
+  runApp(const MoneyMateApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MoneyMateApp extends StatelessWidget {
+  const MoneyMateApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(360, 690), // optional, adjust to your design
-      builder: (context, child) {
-        return GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Flutter Demo',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          ),
-          home: BottomNavScreen(),
-        );
-      },
+    return GetMaterialApp(
+      title: 'MoneyMate',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6C63FF),
+          primary: const Color(0xFF6C63FF),
+          secondary: const Color(0xFF00B894),
+          surface: Colors.white,
+        ),
+        textTheme: GoogleFonts.poppinsTextTheme(),
+      ),
+      home: const MainNavigation(),
     );
   }
 }

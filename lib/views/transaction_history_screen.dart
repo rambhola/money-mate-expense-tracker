@@ -22,7 +22,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget build(BuildContext context) {
     final txController = Get.find<TransactionController>();
     final currencyFormat = NumberFormat.currency(
-      symbol: r'$',
+      symbol: r'₹',
       decimalDigits: 2,
     );
 

@@ -42,45 +42,45 @@ class GoalsScreen extends StatelessWidget {
                   onPressed: () {
                     _targetController.text = goalController.goal.value?.targetAmount.toStringAsFixed(0) ?? '';
                     _savedController.text = '';
-                    
+
                     Get.defaultDialog(
-                      title: 'Update Goal',
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextField(
-                            controller: _targetController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(labelText: 'Target Amount (₹)'),
-                          ),
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: _savedController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(labelText: 'Add Saved Amount (₹)'),
-                          ),
-                        ],
-                      ),
-                      textConfirm: 'Save',
-                      textCancel: 'Cancel',
-                      confirmTextColor: Colors.white,
-                      onConfirm: () {
-                         final double target = double.tryParse(_targetController.text) ?? 5000;
-                         final double newlySaved = double.tryParse(_savedController.text) ?? 0;
-                         if (goalController.goal.value != null) {
-                           goalController.goal.value!.targetAmount = target;
-                           goalController.goal.value!.save();
-                           goalController.updateSavedAmount(newlySaved);
-                         } else {
-                           goalController.setGoal(Goal(
-                              targetAmount: target, 
+                        title: 'Update Goal',
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              controller: _targetController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(labelText: 'Target Amount (₹)'),
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _savedController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(labelText: 'Add Saved Amount (₹)'),
+                            ),
+                          ],
+                        ),
+                        textConfirm: 'Save',
+                        textCancel: 'Cancel',
+                        confirmTextColor: Colors.white,
+                        onConfirm: () {
+                          final double target = double.tryParse(_targetController.text) ?? 5000;
+                          final double newlySaved = double.tryParse(_savedController.text) ?? 0;
+                          if (goalController.goal.value != null) {
+                            goalController.goal.value!.targetAmount = target;
+                            goalController.goal.value!.save();
+                            goalController.updateSavedAmount(newlySaved);
+                          } else {
+                            goalController.setGoal(Goal(
+                              targetAmount: target,
                               savedAmount: newlySaved,
                               startDate: DateTime.now(),
                               endDate: DateTime.now().add(const Duration(days: 30)),
-                           ));
-                         }
-                         Get.back();
-                      }
+                            ));
+                          }
+                          Get.back();
+                        }
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -103,20 +103,14 @@ class GoalsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 20,
-          )
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20)],
       ),
       child: Obx(() {
         final goalData = controller.goal.value;
         final saved = goalData?.savedAmount ?? 0;
         final target = goalData?.targetAmount ?? 5000;
 
-        final double progress =
-        target > 0 ? (saved / target).clamp(0.0, 1.0) : 0.0;
+        final double progress = target > 0 ? (saved / target).clamp(0.0, 1.0) : 0.0;
         final remaining = target - saved;
 
         return Column(
@@ -128,62 +122,35 @@ class GoalsScreen extends StatelessWidget {
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'CURRENT STATUS',
-                      style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold),
-                    ),
+                    Text('CURRENT STATUS', style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)),
                     SizedBox(height: 5),
-                    Text(
-                      'Monthly Savings Goal',
-                      style:
-                      TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
+                    Text('Monthly Savings Goal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                   child: const Icon(Icons.savings, color: Colors.green),
                 )
               ],
             ),
             const SizedBox(height: 30),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _statGroup(
-                    'SAVED SO FAR', format.format(saved), CrossAxisAlignment.start),
-                _statGroup(
-                    'TARGET GOAL', format.format(target), CrossAxisAlignment.end),
+                _statGroup('SAVED SO FAR', format.format(saved), CrossAxisAlignment.start),
+                _statGroup('TARGET GOAL', format.format(target), CrossAxisAlignment.end),
               ],
             ),
-
             const SizedBox(height: 30),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${(progress * 100).toInt()}% Achieved',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                Text(
-                  '${format.format(remaining > 0 ? remaining : 0)} remaining',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green.shade700,
-                      fontWeight: FontWeight.bold),
-                ),
+                Text('${(progress * 100).toInt()}% Achieved', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('${format.format(remaining > 0 ? remaining : 0)} remaining', style: TextStyle(fontSize: 12, color: Colors.green.shade700, fontWeight: FontWeight.bold)),
               ],
             ),
-
             const SizedBox(height: 10),
-
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
@@ -193,15 +160,10 @@ class GoalsScreen extends StatelessWidget {
                 valueColor: const AlwaysStoppedAnimation(Colors.green),
               ),
             ),
-
             const SizedBox(height: 30),
-
             Container(
               padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
-              ),
+              decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20)),
               child: Row(
                 children: [
                   const Icon(Icons.trending_up, color: Colors.blue),
@@ -210,20 +172,14 @@ class GoalsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('On Track',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text(
-                          "You're saving 15% more than last month!",
-                          style:
-                          TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
+                        Text('On Track', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text("You're saving 15% more than last month!", style: TextStyle(fontSize: 12, color: Colors.grey)),
                       ],
                     ),
                   )
                 ],
               ),
-            ),
+            )
           ],
         );
       }),

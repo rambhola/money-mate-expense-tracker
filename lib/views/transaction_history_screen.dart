@@ -3,103 +3,31 @@ import 'package:get/get.dart';
 import '../controllers/transaction_controller.dart';
 import '../models/transaction.dart';
 import 'package:intl/intl.dart';
-
 import 'add_transaction_screen.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
 
   @override
-  State<TransactionHistoryScreen> createState() =>
-      _TransactionHistoryScreenState();
+  State<TransactionHistoryScreen> createState() => _TransactionHistoryScreenState();
 }
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   String selectedFilter = 'All';
   String selectedCategory = 'All';
+  String searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     final txController = Get.find<TransactionController>();
-    final currencyFormat = NumberFormat.currency(
-      symbol: r'₹',
-      decimalDigits: 2,
-    );
+    final currencyFormat = NumberFormat.currency(symbol: r'$', decimalDigits: 2);
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Transactions',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: Colors.green,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune),
-            onPressed: () {
-              Get.bottomSheet(
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Filter by Category',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children:
-                            [
-                                  'All',
-                                  'Food',
-                                  'Salary',
-                                  'Rent',
-                                  'Shopping',
-                                  'Transport',
-                                  'Bills',
-                                  'Others',
-                                ]
-                                .map(
-                                  (cat) => ChoiceChip(
-                                    label: Text(cat),
-                                    selected: selectedCategory == cat,
-                                    selectedColor: Colors.green.shade200,
-                                    onSelected: (val) {
-                                      setState(() => selectedCategory = cat);
-                                      Get.back();
-                                    },
-                                  ),
-                                )
-                                .toList(),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        title: const Text('Transactions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green)),
+        actions: [],
         titleSpacing: 0,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -110,15 +38,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: TextField(
+              onChanged: (val) => setState(() => searchQuery = val),
               decoration: InputDecoration(
                 hintText: 'Search transactions',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
               ),
             ),
@@ -126,34 +52,36 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           _buildFilters(),
           Expanded(
             child: Obx(() {
-              final filtered = _getFilteredTransactions(
-                txController.transactions,
+              final groupedData = txController.getGroupedTransactions(
+                filter: selectedFilter,
+                category: selectedCategory,
+                searchQuery: searchQuery,
               );
-              if (filtered.isEmpty) {
-                return const Center(child: Text('No transactions found.'));
-              }
 
-              return ListView(
+              if (groupedData.isEmpty) return const Center(child: Text('No transactions found.'));
+
+              return ListView.builder(
                 padding: const EdgeInsets.all(20),
-                children: [
-                  _groupTitle('Today'),
-                  ...filtered
-                      .take(2)
-                      .map((t) => _transactionCard(t, currencyFormat)),
-                  const SizedBox(height: 10),
-                  _groupTitle('Yesterday'),
-                  ...filtered
-                      .skip(2)
-                      .map((t) => _transactionCard(t, currencyFormat)),
-                ],
+                itemCount: groupedData.length,
+                itemBuilder: (context, index) {
+                  final groupKey = groupedData.keys.elementAt(index);
+                  final transactions = groupedData[groupKey]!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _groupTitle(groupKey),
+                      ...transactions.map((t) => _transactionCard(t, currencyFormat)),
+                      const SizedBox(height: 10),
+                    ],
+                  );
+                },
               );
             }),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            Get.to(() => const AddTransactionScreen(type: 'expense')),
+        onPressed: () => Get.to(() => const AddTransactionScreen(type: 'expense')),
         backgroundColor: Colors.green.shade700,
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -164,11 +92,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
-        children: [
-          'All',
-          'Income',
-          'Expense',
-        ].map((f) => _filterChip(f)).toList(),
+        children: ['All', 'Income', 'Expense'].map((f) => _filterChip(f)).toList(),
       ),
     );
   }
@@ -184,13 +108,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           color: active ? Colors.green.shade900 : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.white : Colors.grey.shade700,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        child: Text(label, style: TextStyle(color: active ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -198,100 +116,72 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget _groupTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          Text(
-            title == 'Today' ? 'OCT 24' : 'OCT 23',
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-          ),
-        ],
-      ),
+      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
     );
   }
 
   Widget _transactionCard(Transaction tx, NumberFormat format) {
     final isExpense = tx.type == 'expense';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.01),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return Dismissible(
+      key: Key(tx.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(22)),
+        alignment: Alignment.centerRight,
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              _getIcon(tx.category),
-              color: Colors.green.shade800,
-              size: 22,
-            ),
+      confirmDismiss: (direction) => showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete Transaction'),
+            content: const Text('Are you sure you want to delete this transaction?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.redAccent))),
+            ],
+          )
+      ),
+      onDismissed: (direction) => Get.find<TransactionController>().deleteTransaction(tx.id),
+      child: GestureDetector(
+        onTap: () => Get.to(() => AddTransactionScreen(type: tx.type, transaction: tx)),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 8, offset: const Offset(0, 4))],
           ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tx.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.grey.shade50, shape: BoxShape.circle),
+                child: Icon(_getIcon(tx.category), color: Colors.green.shade800, size: 22),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(tx.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text('${DateFormat('hh:mm a').format(tx.date)} • ${tx.description.isEmpty ? 'Monthly payment' : tx.description}',
+                        style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+                  ],
                 ),
-                Text(
-                  '${DateFormat('hh:mm a').format(tx.date)} • ${tx.description.isEmpty ? 'Monthly payment' : tx.description}',
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
-                ),
-              ],
-            ),
+              ),
+              Text('${isExpense ? '-' : '+'}${format.format(tx.amount)}',
+                  style: TextStyle(color: isExpense ? Colors.redAccent : Colors.green.shade800, fontWeight: FontWeight.bold, fontSize: 14)),
+            ],
           ),
-          Text(
-            '${isExpense ? '-' : '+'}${format.format(tx.amount)}',
-            style: TextStyle(
-              color: isExpense ? Colors.redAccent : Colors.green.shade800,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  List<Transaction> _getFilteredTransactions(List<Transaction> txs) {
-    var filtered = txs;
-    if (selectedFilter != 'All') {
-      filtered = filtered
-          .where((t) => t.type.toLowerCase() == selectedFilter.toLowerCase())
-          .toList();
-    }
-    if (selectedCategory != 'All') {
-      filtered = filtered
-          .where(
-            (t) => t.category.toLowerCase() == selectedCategory.toLowerCase(),
-          )
-          .toList();
-    }
-    return filtered;
-  }
+
 
   IconData _getIcon(String cat) {
     if (cat.toLowerCase().contains('food')) return Icons.coffee;
